@@ -135,17 +135,42 @@ Account is ready to use!
                 )
                 
             else:
-                error_msg = """
-❌ *Account Creation Failed*
+                # Check what type of provider we're using
+                if SMS_API_KEY and SMS_API_KEY != "your_api_key_here" and SMS_API_KEY != "MOCK_MODE":
+                    error_msg = """
+❌ *Account Creation Failed (Real SMS Mode)*
 
 Possible reasons:
-• No virtual numbers available
-• SMS service issue
-• Swiggy API changes
-• Insufficient balance
+• No virtual numbers available for India
+• Insufficient balance on SMS-Activate
+• Swiggy API endpoints changed
+• Service 'sw' not available (try 'ot')
 
-Please try again or check your SMS provider configuration.
-                """
+*Fix:*
+1. Check SMS-Activate balance
+2. Try different country code
+3. Update API endpoints
+4. Contact SMS provider support
+                    """
+                else:
+                    error_msg = """
+❌ *Account Creation Failed (Mock Mode)*
+
+Bot is running in MOCK_MODE (fake OTP).
+For real account creation:
+
+1. Get SMS-Activate API key:
+   https://sms-activate.org/api2
+   
+2. Add funds to your account
+   
+3. Update .env file:
+   SMS_ACTIVATE_API_KEY=your_real_key_here
+   
+4. Restart bot
+
+*Note:* Mock mode only works for testing.
+                    """
                 
                 keyboard = InlineKeyboardMarkup()
                 keyboard.add(InlineKeyboardButton("🔄 Try Again", callback_data="create_account"))

@@ -9,6 +9,9 @@ class SMSActivateProvider:
     """
     SMS-Activate.org API wrapper for virtual numbers.
     Requires API key and balance.
+    
+    Country codes: 6=India, 0=Russia, 1=USA, 2=Ukraine, etc.
+    Service: 'sw' for Swiggy (may need 'ot' for other)
     """
     
     BASE_URL = "https://api.sms-activate.org/stubs/handler_api.php"
@@ -16,7 +19,7 @@ class SMSActivateProvider:
     def __init__(self, api_key: str):
         self.api_key = api_key
         
-    def get_number(self, service: str = "sw", country: int = 6) -> Optional[Tuple[str, str]]:
+    def get_number(self, service: str = "ot", country: int = 6) -> Optional[Tuple[str, str]]:
         """
         Get virtual number for service.
         country: 6 = India, 0 = Russia, etc.
@@ -31,20 +34,25 @@ class SMSActivateProvider:
         
         try:
             response = requests.get(self.BASE_URL, params=params, timeout=30)
-            if 'ACCESS_NUMBER' in response.text:
+            response_text = response.text.strip()
+            logger.debug(f"getNumber response: {response_text}")
+            
+            if 'ACCESS_NUMBER' in response_text:
                 # Format: ACCESS_NUMBER:activation_id:number
-                parts = response.text.split(':')
+                parts = response_text.split(':')
                 if len(parts) >= 3:
                     activation_id = parts[1]
                     number = parts[2]
                     logger.info(f"Got number: {number}, activation_id: {activation_id}")
                     return activation_id, number
-            elif 'NO_NUMBERS' in response.text:
+            elif 'NO_NUMBERS' in response_text:
                 logger.error("No numbers available for this country/service")
-            elif 'NO_BALANCE' in response.text:
+            elif 'NO_BALANCE' in response_text:
                 logger.error("Insufficient balance")
+            elif 'ERROR' in response_text:
+                logger.error(f"API error: {response_text}")
             else:
-                logger.error(f"Unexpected response: {response.text}")
+                logger.error(f"Unexpected response: {response_text}")
         except Exception as e:
             logger.error(f"Error getting number: {e}")
             
@@ -64,18 +72,23 @@ class SMSActivateProvider:
         try:
             response = requests.get(self.BASE_URL, params=params, timeout=30)
             text = response.text.strip()
+            logger.debug(f"getStatus response: {text}")
             
             if text.startswith('STATUS_OK:'):
                 # Format: STATUS_OK:code
                 code = text.split(':')[1]
+                logger.info(f"Got OTP code: {code}")
                 return code
             elif text == 'STATUS_WAIT_CODE':
                 # Still waiting
                 return None
+            elif text == 'STATUS_WAIT_RETRY':
+                # Can retry
+                return None
             elif text == 'STATUS_CANCEL':
                 return "CANCEL"
             else:
-                logger.debug(f"Status response: {text}")
+                logger.warning(f"Unknown status: {text}")
                 return None
                 
         except Exception as e:

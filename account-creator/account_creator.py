@@ -22,10 +22,15 @@ class SwiggyAccountCreator:
         self.base_url = "https://www.swiggy.com"
         self.csrf_pattern = r"window._csrfToken = \"(.+?)\";"
         
-        # Sign-up endpoints
-        self.signup_otp_url = f"{self.base_url}/dapi/auth/signup-otp"
-        self.signup_verify_url = f"{self.base_url}/dapi/auth/signup-verify"
-        self.complete_signup_url = f"{self.base_url}/dapi/auth/complete-signup"
+        # Sign-up endpoints (UPDATE THESE WITH REAL ENDPOINTS)
+        # To get real endpoints:
+        # 1. Open Swiggy.com in browser
+        # 2. DevTools → Network tab
+        # 3. Sign up with phone
+        # 4. Note the POST endpoints
+        self.signup_otp_url = f"{self.base_url}/dapi/auth/sms-otp"  # Might be same as login
+        self.signup_verify_url = f"{self.base_url}/dapi/auth/otp-verify"  # Might be same
+        self.complete_signup_url = f"{self.base_url}/dapi/auth/complete-signup"  # This might not exist
         
     def _get_csrf_token(self) -> Optional[str]:
         """Extract CSRF token from Swiggy homepage"""
