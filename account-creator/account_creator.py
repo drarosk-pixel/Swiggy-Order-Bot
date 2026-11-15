@@ -5,6 +5,8 @@ import string
 import logging
 from typing import Dict, Any, Optional, Tuple
 from fake_useragent import UserAgent
+import socks
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -13,14 +15,33 @@ class SwiggyAccountCreator:
     Automatically creates Swiggy accounts using virtual numbers.
     """
     
-    def __init__(self, sms_provider):
+    def __init__(self, sms_provider, proxy_url: str = None):
         self.sms = sms_provider
         self.session = requests.Session()
         self.ua = UserAgent()
+        self.proxy_url = proxy_url
+        
+        # Setup proxy if provided
+        if proxy_url:
+            self._setup_proxy(proxy_url)
         
         # Endpoints (may need updating)
         self.base_url = "https://www.swiggy.com"
         self.csrf_pattern = r"window._csrfToken = \"(.+?)\";"
+        
+    def _setup_proxy(self, proxy_url: str):
+        """
+        Setup proxy for requests.
+        proxy_url format: http://user:pass@host:port or socks5://user:pass@host:port
+        """
+        try:
+            self.session.proxies = {
+                'http': proxy_url,
+                'https': proxy_url
+            }
+            logger.info(f"Proxy configured: {proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url}")
+        except Exception as e:
+            logger.error(f"Failed to setup proxy: {e}")
         
         # Sign-up endpoints (UPDATE THESE WITH REAL ENDPOINTS)
         # To get real endpoints:

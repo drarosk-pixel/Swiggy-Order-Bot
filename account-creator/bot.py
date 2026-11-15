@@ -37,8 +37,15 @@ else:
     sms_provider = MockSMSProvider()
     logger.info("Using mock SMS provider (for testing)")
 
-# Initialize account creator
-account_creator = SwiggyAccountCreator(sms_provider)
+# Initialize account creator with optional proxy
+PROXY_URL = os.getenv("PROXY_URL", None)
+
+if PROXY_URL:
+    logger.info(f"Using proxy: {PROXY_URL.split('@')[-1] if '@' in PROXY_URL else PROXY_URL}")
+    account_creator = SwiggyAccountCreator(sms_provider, PROXY_URL)
+else:
+    logger.info("Running without proxy")
+    account_creator = SwiggyAccountCreator(sms_provider)
 
 # User states and data
 user_sessions = {}  # user_id -> {"state": "...", "data": {...}}
